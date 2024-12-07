@@ -3,6 +3,9 @@ import { useForm } from 'react-hook-form'
 import { Schema, schema } from '../../utils/rules.ts'
 import { yupResolver } from '@hookform/resolvers/yup';
 import Input from '../../components/Input'
+import { useMutation } from '@tanstack/react-query'
+import { registerAccount } from '../../apis/auth.api.ts'
+import { omit } from 'lodash'
 
 type FormData = Schema
 
@@ -10,21 +13,23 @@ export default function Register() {
   const {
     register,
     handleSubmit,
-    getValues,
     formState: { errors }
   } = useForm<FormData>({
     resolver: yupResolver(schema)
   })
 
-  const onSubmit = handleSubmit(
-    (data) => {
-      console.log(data)
-    },
-    (data) => {
-      const password = getValues('password')
-      console.log(password)
-    }
-  )
+  const registerAccountMutation = useMutation({
+    mutationFn: (body: Omit<FormData, 'confirm_password'>) => registerAccount(body)
+  })
+
+  const onSubmit = handleSubmit((data) => {
+    const body = omit(data, ['confirm_password'])
+    registerAccountMutation.mutate(body, {
+      onSuccess: (data) => {
+        console.log(data)
+      }
+    })
+  })
 
   return (
     <div className='bg-orange'>
